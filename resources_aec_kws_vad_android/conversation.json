@@ -1,0 +1,18 @@
+{
+  "device_type":"phone",
+  "assets_version":"0.4.20241018",
+  "conv_config":{
+    "log_level":"kLogLevelVerbose"
+  },
+  "nls_config":{
+    "debug_level":4,
+    "sr_format":"opus",
+    "sample_rate":16000
+  },
+  "audio_config":{
+    "debug":"none",
+    "16k_audio":{
+      "name":"16kmono16bit"
+    }
+  }
+}

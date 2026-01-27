@@ -1,0 +1,5 @@
+conversation.json
+ty_vad
+ty_vad.bin
+ty_kws.bin
+mindaes.bin
