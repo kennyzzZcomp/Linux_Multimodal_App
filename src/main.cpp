@@ -162,14 +162,31 @@ int main(int argc, char *argv[])
     }
 
     std::cout << "connect success: " << std::endl;
-    // 发送动作放到 kConversationStarted 回调里，确保 WebSocket/会话已就绪。
-
-
-    // 这里可以推送音频数据，或进行其他操作
-    // ...
-    // 等待直到收到下发二进制音频或对话完成，超时 30s
-    std::cout << "等待按下回车键继续。。。" << std::endl;
-    std::cin.get();
+    // 进入 CLI 等待用户输入指令
+    std::cout << "CLI commands: 1=send audio, q=quit, help=show commands" << std::endl;
+    for (std::string cmd;;) {
+        std::cout << ">> " << std::flush;
+        if (!std::getline(std::cin, cmd)) {
+            break;
+        }
+        if (cmd == "1") {
+            // send recorded audio file
+            trigger_audio_send_once();
+        }else if (cmd == "2") {
+            // request to have tts respond
+            text_to_speech_request("幸福是一种技能，是你摒弃了外在多余欲望后的内心平和。");
+        }else if(cmd == "3"){
+            // VQA request
+            std::string image_path = "/home/zijian/linux_cpp_multimodal/Linux_Multimodal_App/test_img.jpg"; // replace with your image path
+            vqa_send_request(image_path);
+        } else if (cmd == "help") {
+            std::cout << "CLI commands: 1=send audio, q=quit, help=show commands" << std::endl;
+        } else if (cmd == "q" || cmd == "quit" || cmd == "exit") {
+            break;
+        } else if (!cmd.empty()) {
+            std::cout << "Unknown command: " << cmd << std::endl;
+        }
+    }
 
     std::cout << "\n 断开连接..." << std::endl;
     ret = conversation->Disconnect();

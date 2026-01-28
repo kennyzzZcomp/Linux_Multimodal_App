@@ -1,6 +1,8 @@
 #include "audio_handler.h"
 #include "conversation_handler.h"
 
+#include <cstdlib>
+
 
 using namespace convsdk;
 
@@ -44,6 +46,33 @@ void SaveBinaryEventToFile(ConvEvent* event) {
     if (tofs.is_open()) {
         tofs.write(reinterpret_cast<const char*>(data.data()), data.size());
         tofs.close();
+
+        // Also convert the accumulated PCM to MP3 for quick inspection.
+        std::string mp3_path = total_path;
+        if (mp3_path.size() >= 4 && mp3_path.substr(mp3_path.size() - 4) == ".pcm") {
+            mp3_path.replace(mp3_path.size() - 4, 4, ".mp3");
+        } else {
+            mp3_path += ".mp3";
+        }
+
+        static std::atomic<bool> mp3_busy{false};
+        bool expected = false;
+        if (mp3_busy.compare_exchange_strong(expected, true)) {
+            std::thread([total_path, mp3_path]() {
+                std::ostringstream cmd;
+                cmd << "ffmpeg -y -f s16le -ar 24000 -ac 1 -i "
+                    << total_path
+                    << " -codec:a libmp3lame -b:a 128k "
+                    << mp3_path
+                    << " > /dev/null 2>&1";
+                int rc = std::system(cmd.str().c_str());
+                if (rc != 0) {
+                    std::cerr << "FFmpeg convert failed (rc=" << rc << ") for " << total_path << std::endl;
+                }
+                mp3_busy.store(false);
+            }).detach();
+        }
+        
     } else {
         std::cerr << "Failed to open " << total_path << " for appending" << std::endl;
     }

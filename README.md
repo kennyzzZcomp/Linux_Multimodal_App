@@ -1,4 +1,21 @@
-# 阿里多模态linux demo
+# Alibaba multimodal application linux demo
+
+System Version: Ubuntu 22.04
+
+## 生成物说明: 
+```
+Linux_Multimodal_App/  
+│── build        Linux下可执行程序以及cmake编译仓库 
+│── external       三方库文件如json  
+│── include    SDK接口需要的头文件，程序需要的头文件 
+│── lib  
+│   └── libconversation.so    SDK成果物动态库  
+│── resources   SDK运行需要的资源文件, 根据业务场景选择 
+│── resources_aec_kws_vad_android       VAD声音检测文件 
+│── README.md       说明文件
+│── CMakeLists.txt      cmake编译文件
+└── audio_16k.pcm/wav    测试音频文件
+```
 
 ## 手动编译方法
 1. 编译：

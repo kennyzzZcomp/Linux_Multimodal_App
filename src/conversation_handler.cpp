@@ -36,42 +36,6 @@ void onMessage(ConvEvent *event, void *param)
     case ConvEvent::kConversationStarted:{
         // 对话建连成功
         std::cout<<"对话已开始!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-        // push2talk 模式下不应等待 SentenceBegin 才开始发送音频：
-        // SentenceBegin 通常由服务端对上行音频/VAD 判定触发，否则会造成“永远不触发发送”。
-        std::thread audioSendThread([]() {
-            // 等待 DialogStateChanged -> IDLE 的许可
-            while (!can_send_audio.load()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
-
-            ConvRetCode start_ret = conversation->SetAction(kStartHumanSpeech);
-            std::cout << "SetAction StartHumanSpeech ret=" << start_ret << std::endl;
-            if (start_ret != kSuccess) {
-                std::cerr << "StartHumanSpeech failed (ret=" << start_ret << "), skip sending audio." << std::endl;
-                return;
-            }
-
-            // Give the SDK a brief moment to switch state before pushing audio.
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
-
-            bool success = SendAudioFile(
-                conversation,
-                "/home/zijian/linux_cpp_multimodal/Linux_Multimodal_App/audio_16k.pcm",
-                "pcm",
-                16000,
-                640,
-                false
-            );
-            ConvRetCode stop_ret = conversation->SetAction(kStopHumanSpeech);
-            std::cout << "SetAction StopHumanSpeech ret=" << stop_ret << std::endl;
-
-            if (success) {
-                std::cout << "✅ 音频流发送线程完成" << std::endl;
-            } else {
-                std::cerr << "❌ 音频流发送失败" << std::endl;
-            }
-        });
-        audioSendThread.detach();
         break;
     }
     case ConvEvent::kConversationCompleted:
@@ -161,6 +125,113 @@ void onMessage(ConvEvent *event, void *param)
 void onEtMessage(ConvLogLevel level, const char *log, void *user_data)
 {
     std::cout << " ==>> [" << level << "] " << log << std::endl;
+}
+
+void trigger_audio_send_once()
+{
+    if (!conversation) {
+        std::cerr << "Conversation not ready, cannot send audio." << std::endl;
+        return;
+    }
+
+    static std::atomic<bool> is_sending{false};
+    bool expected = false;
+    if (!is_sending.compare_exchange_strong(expected, true)) {
+        std::cout << "Audio send already in progress." << std::endl;
+        return;
+    }
+
+    std::thread audioSendThread([]() {
+        // 等待 DialogStateChanged -> IDLE 的许可
+        while (!can_send_audio.load()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
+        // Prevent overlapping sends until next IDLE.
+        can_send_audio.store(false);
+
+        ConvRetCode start_ret = conversation->SetAction(kStartHumanSpeech);
+        std::cout << "SetAction StartHumanSpeech ret=" << start_ret << std::endl;
+        if (start_ret != kSuccess) {
+            std::cerr << "StartHumanSpeech failed (ret=" << start_ret << "), skip sending audio." << std::endl;
+            is_sending.store(false);
+            return;
+        }
+
+        // Give the SDK a brief moment to switch state before pushing audio.
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+        bool success = SendAudioFile(
+            conversation,
+            "/home/zijian/linux_cpp_multimodal/Linux_Multimodal_App/audio_16k.pcm",
+            "pcm",
+            16000,
+            640,
+            false
+        );
+        ConvRetCode stop_ret = conversation->SetAction(kStopHumanSpeech);
+        std::cout << "SetAction StopHumanSpeech ret=" << stop_ret << std::endl;
+
+        if (success) {
+            std::cout << "✅ 音频流发送线程完成" << std::endl;
+        } else {
+            std::cerr << "❌ 音频流发送失败" << std::endl;
+        }
+
+        is_sending.store(false);
+    });
+
+    audioSendThread.detach();
+}
+
+void text_to_speech_request(const std::string& text){
+    Json::Value root;
+    root["text"] = text;
+    root["type"] = "transcript";
+
+    Json::StreamWriterBuilder writer;
+    writer["indentation"] = ""; // No whitespace
+
+    ConvRetCode ret = conversation -> SendResponseData(Json::writeString(writer, root).c_str());
+    if (ret != kSuccess){
+        std::cerr << "SendResponseData failed with code: " << ret << std::endl;
+    } else {
+        std::cout << "SendResponseData succeeded." << std::endl;
+    }
+}
+
+void vqa_send_request(std::string image_path){
+    Json::Value root;
+    root["text"] = "你帮我看看图片里面是啥呗"; 
+    root["type"] = "prompt";
+
+    Json::Value parameters;
+    Json::Value biz_params;
+
+    biz_params["user_defined_params"] = Json::Value(Json::objectValue);
+
+    Json::Value images(Json::arrayValue);
+    {
+        Json::Value image;
+
+        ConversationUtils utils;
+        image["type"] = "base64";
+        image["value"] = utils.Base64EncodeFromFilePath(image_path);
+        
+        images.append(image);
+    }
+    parameters["images"] = images;
+    parameters["biz_params"] = biz_params;
+    root["parameters"] = parameters;
+
+    Json::StreamWriterBuilder writer;
+    writer["indentation"] = ""; // No whitespace
+    ConvRetCode ret = conversation -> SendResponseData(Json::writeString(writer, root).c_str());
+    if (ret != kSuccess){
+        std::cerr << "VQA SendResponseData failed with code: " << ret << std::endl;
+    } else {
+        std::cout << "VQA SendResponseData succeeded." << std::endl;
+    }
 }
 
 std::string gen_init_params()
