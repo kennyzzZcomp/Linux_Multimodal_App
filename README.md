@@ -98,4 +98,10 @@ flowchart TD
 
 ```
 
+- 共享数据的线程安全：audioCaptureThread 和 audioSendThread 会同时操作音频数据队列，必须使用互斥锁（std::mutex） 来保护，否则程序会因数据竞争而崩溃。
+
+- 原子操作标志位：控制发送的 g_isSending 标志位会被多个线程读写，必须声明为 std::atomic<bool> 以确保状态变更的即时性和安全性。
+
+- 按下按钮时的“清空”操作：在按下按钮、将 g_isSending 设为 true 之前，务必清空音频缓冲区队列。否则，积压在队列里的旧环境噪音会被当作“第一句话”发送出去，导致识别出错。
+
 
