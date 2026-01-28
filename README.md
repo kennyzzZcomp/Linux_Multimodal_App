@@ -1,8 +1,8 @@
 # Alibaba multimodal application linux demo
 
-System Version: Ubuntu 22.04
+System Version: Ubuntu 22.04, ffmpeg version 4.4.2
 
-## 生成物说明: 
+## 文件内容说明: 
 ```
 Linux_Multimodal_App/  
 │── build        Linux下可执行程序以及cmake编译仓库 
@@ -17,7 +17,7 @@ Linux_Multimodal_App/
 └── audio_16k.pcm/wav    测试音频文件
 ```
 
-## 手动编译方法
+## 手动编译方法 -- 可以跳过使用cmake进行编译
 1. 编译：
 ```bash
 g++ -std=c++11 \
@@ -62,4 +62,18 @@ ffmpeg -f s16le -ar 24000 -ac 1 -i /home/zijian/complete_audio.pcm   -acodec lib
 
 5. 运行：`./conv_demo --apikey 12345 --url 12345`。
 
+## 如何使用这个程序
 
+此Demo运行在Linux系统，因此采用的是CLI界面进行操作。本程序简单实现了三个交互功能可供测试。
+
+ - 第一个功能为预先录制好的语音上传，这个语言预先被解析为`pcm`类型的文件。随后采用流式上传的方式模拟真实语音上传。上传语音时会创建一个单独的分离线程在后台进行，执行完后自动销毁。随后程序会触发SDK回调程序`onMessage`中的`kbinary`接受云端模型的回复。最后会储存为`.mp3`音频。
+
+ > 程序执行方式：程序启动初始化成功后，在TERMINAL上按`1`。
+
+ - 第二个功能为测试文本合成TTS，预先写好一段话，请求云端的模型下发这一段文字的合成语音。
+
+ > 程序执行方式： 程序启动初始化成功后，在TERMINAL上按`2`。
+
+ - 第三个功能为Visual Question Answering(VQA), 本地储存一张`.jpg`图片。使用SDK把图片解析为BASE64格式上传。接收云端模型回复。
+
+ > 程序执行方式： 程序启动初始化成功后，在TERMINAL上按`3`。

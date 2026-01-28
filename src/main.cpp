@@ -177,7 +177,8 @@ int main(int argc, char *argv[])
             text_to_speech_request("幸福是一种技能，是你摒弃了外在多余欲望后的内心平和。");
         }else if(cmd == "3"){
             // VQA request
-            std::string image_path = "/home/zijian/linux_cpp_multimodal/Linux_Multimodal_App/test_img.jpg"; // replace with your image path
+            // replace with your image path
+            std::string image_path = "/home/zijian/linux_cpp_multimodal/Linux_Multimodal_App/test_img.jpg"; 
             vqa_send_request(image_path);
         } else if (cmd == "help") {
             std::cout << "CLI commands: 1=send audio, q=quit, help=show commands" << std::endl;
