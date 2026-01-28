@@ -77,3 +77,25 @@ ffmpeg -f s16le -ar 24000 -ac 1 -i /home/zijian/complete_audio.pcm   -acodec lib
  - 第三个功能为Visual Question Answering(VQA), 本地储存一张`.jpg`图片。使用SDK把图片解析为BASE64格式上传。接收云端模型回复。
 
  > 程序执行方式： 程序启动初始化成功后，在TERMINAL上按`3`。
+
+## 实际录音逻辑流程图
+
+```mermaid
+
+flowchart TD
+    A[“程序启动”] --> B[“启动常驻线程:<br>持续录音到缓冲区”]
+    B --> j["使用另一个flag去控制录音开启和停止"]
+    A --> C[“启动常驻线程:<br>循环检查发送标志”]
+    
+    C --> D{“发送标志 = true?”}
+    D -- 否 --> C
+    D -- 是 --> E[“从缓冲区取出音频数据块”]
+    E --> F[“调用 SDK SendAudio 发送”]
+    F --> C
+    
+    G[“用户按下按钮”] --> H[“设置发送标志 = true<br>并通知SDK开始识别（Start）”]
+    I[“用户松开按钮”] --> J[“设置发送标志 = false<br>并通知SDK结束识别（Stop）”]
+
+```
+
+
