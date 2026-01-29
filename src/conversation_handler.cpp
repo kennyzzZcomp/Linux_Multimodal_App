@@ -127,7 +127,14 @@ void onEtMessage(ConvLogLevel level, const char *log, void *user_data)
     std::cout << " ==>> [" << level << "] " << log << std::endl;
 }
 
-void trigger_audio_send_once()
+/**
+ * @brief 触发一次音频发送流程:
+ * 1. 等待 DialogStateChanged -> IDLE 许可
+ * 2. 触发 StartHumanSpeech: 模拟taptotalk模式
+ * 3. 发送音频数据
+ * 4. 触发 StopHumanSpeech
+ */
+void trigger_audio_send_once(const std::string& audio_file_path)
 {
     if (!conversation) {
         std::cerr << "Conversation not ready, cannot send audio." << std::endl;
@@ -141,7 +148,7 @@ void trigger_audio_send_once()
         return;
     }
 
-    std::thread audioSendThread([]() {
+    std::thread audioSendThread([audio_file_path]() {
         // 等待 DialogStateChanged -> IDLE 的许可
         while (!can_send_audio.load()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -163,7 +170,7 @@ void trigger_audio_send_once()
 
         bool success = SendAudioFile(
             conversation,
-            "/home/zijian/linux_cpp_multimodal/Linux_Multimodal_App/audio_16k.pcm",
+            audio_file_path,
             "pcm",
             16000,
             640,
@@ -183,7 +190,9 @@ void trigger_audio_send_once()
 
     audioSendThread.detach();
 }
-
+/**
+ * @brief 自动化测试TTS功能
+ */
 void text_to_speech_request(const std::string& text){
     Json::Value root;
     root["text"] = text;
@@ -200,6 +209,9 @@ void text_to_speech_request(const std::string& text){
     }
 }
 
+/**
+ * @brief 自动化测试VQA功能
+ */
 void vqa_send_request(std::string image_path){
     Json::Value root;
     root["text"] = "你帮我看看图片里面是啥呗"; 
@@ -297,4 +309,19 @@ std::string gen_init_params()
     std::string result = writer.write(root);
     std::cout << "init params: " << result.c_str() << std::endl;
     return result;
+}
+
+std::string getExecutableDirectory() {
+    char buffer[1024];
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+    if (len != -1) {
+        buffer[len] = '\0';
+        std::string fullPath(buffer);
+        size_t pos = fullPath.find_last_of("/");
+        if (pos != std::string::npos) {
+            return fullPath.substr(0, pos);
+        }
+    }
+    // 如果获取失败，返回当前目录（降级方案）
+    return ".";
 }

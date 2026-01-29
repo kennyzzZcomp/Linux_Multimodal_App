@@ -28,6 +28,9 @@ static std::string g_apikey = "";
 static std::string g_url = "wss://dashscope.aliyuncs.com/api-ws/v1/inference";
 std::string g_log_level = "verbose"; /* version, debug, info, warn, error */
 std::string g_mode = "push2talk"; /* tap2talk, push2talk, duplex, kws_duplex */
+std::string g_exeDir = getExecutableDirectory();
+std::string audio_file_path = g_exeDir + "/audio_16k.pcm";
+std::string g_image_file_path = g_exeDir + "/test_img.jpg";
 
 Conversation *conversation;
 std::atomic<bool> can_send_audio{false};
@@ -171,14 +174,14 @@ int main(int argc, char *argv[])
         }
         if (cmd == "1") {
             // send recorded audio file
-            trigger_audio_send_once();
+            trigger_audio_send_once(audio_file_path);
         }else if (cmd == "2") {
             // request to have tts respond
             text_to_speech_request("幸福是一种技能，是你摒弃了外在多余欲望后的内心平和。");
         }else if(cmd == "3"){
             // VQA request
             // replace with your image path
-            std::string image_path = "/home/zijian/linux_cpp_multimodal/Linux_Multimodal_App/test_img.jpg"; 
+            std::string image_path = g_image_file_path; 
             vqa_send_request(image_path);
         } else if (cmd == "help") {
             std::cout << "CLI commands: 1=send audio, q=quit, help=show commands" << std::endl;

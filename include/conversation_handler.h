@@ -22,7 +22,8 @@ void onEtMessage(convsdk::ConvLogLevel level, const char* log, void* user_data);
 std::string gen_init_params();
 
 // Trigger a one-shot audio send from CLI.
-void trigger_audio_send_once();
+void trigger_audio_send_once(const std::string& audio_file_path);
 // text to speech function
 void text_to_speech_request(const std::string& text);
 void vqa_send_request(std::string image_path);
+std::string getExecutableDirectory();

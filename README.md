@@ -105,3 +105,26 @@ flowchart TD
 - 按下按钮时的“清空”操作：在按下按钮、将 g_isSending 设为 true 之前，务必清空音频缓冲区队列。否则，积压在队列里的旧环境噪音会被当作“第一句话”发送出去，导致识别出错。
 
 
+## 构建Docker镜像 --> 运行Docker容器
+
+1. 进入工作文件的根目录`Linux_Multimodal_App`。
+```bash
+docker build -t multimodal-demo:v1.0 .
+```
+
+2. 启动新容器并且进入bash
+```bash
+# 启动并在退出后删除
+docker run -it --rm --entrypoint /bin/bash multimodal-demo:v1.0
+
+# 启动并命名容器(不用--rm，命名容器为mydebug)
+docker run -it --name mydebug multimodal-demo:v1.0 /bin/bash
+# 退出后重新进入
+docker start mydebug
+docker exec -it mydebug /bin/bash
+
+# delete
+docker rm -f mydebug
+```
+ - ctrl + D 可退出，容器自动删除。
+ - please download **Docker** and **Container tools** in vscode. Then you can get the return mp3 file from AI.
