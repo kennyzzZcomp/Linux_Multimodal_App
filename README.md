@@ -9,7 +9,7 @@ Linux_Multimodal_App/
 │── external       三方库文件如json  
 │── include    SDK接口需要的头文件，程序需要的头文件 
 │── lib  
-│   └── libconversation.so    SDK成果物动态库  
+│   └── libconversation.so    SDK成果物动态库
 │── resources   SDK运行需要的资源文件, 根据业务场景选择 
 │── resources_aec_kws_vad_android       VAD声音检测文件 
 │── README.md       说明文件
@@ -17,7 +17,38 @@ Linux_Multimodal_App/
 └── audio_16k.pcm/wav    测试音频文件
 ```
 
-## 手动编译方法 -- 可以跳过使用cmake进行编译
+## 交叉编译 ARM 系统
+
+> 如需在yocto系统运行，使用前需要交叉编译,并且动态链接库也需要换成arm系统的
+
+1. 首先需要在CMakeList.txt文档中加入这些设置
+```bash
+# 设置SDK中目标系统（ARM）的根目录
+set(SDK_SYSROOT "/home/zijian/Documents/toolchain-oobe/sysroots/cortexa73-poky-linux")
+# 将SDK的库和头文件路径添加到CMake的默认搜索路径之前
+list(APPEND CMAKE_PREFIX_PATH "${SDK_SYSROOT}/usr")
+list(APPEND CMAKE_LIBRARY_PATH "${SDK_SYSROOT}/usr/lib")
+list(APPEND CMAKE_INCLUDE_PATH "${SDK_SYSROOT}/usr/include")
+
+# 需要的动态链接库
+find_library(AVCODEC_LIB NAMES avcodec)
+find_library(AVFORMAT_LIB NAMES avformat)
+find_library(AVUTIL_LIB NAMES avutil) # 通常也需要这个库
+
+if (NOT AVCODEC_LIB OR NOT AVFORMAT_LIB)
+    message(FATAL_ERROR "Required ffmpeg libraries (avcodec, avformat) not found.")
+endif()
+
+```
+2. 
+![从库中下载需要的交叉编译工具链](doc/img/compile1.png "交叉编译工具链")
+3. 
+![从库中下载需要的交叉编译工具链2](doc/img/compile2.png "交叉编译工具链2")
+4. 随后取APP编译源码，在当前终端进入编译源码文件夹。进行cmake编译。
+
+
+
+## 手动编译方法 Ubuntu Linux系统
 1. 编译：
 ```bash
 g++ -std=c++11 \
@@ -50,7 +81,7 @@ LD_LIBRARY_PATH=linux_cpp_multimodal/Linux_Multimodal_App/lib ./linux_cpp_multim
 ffmpeg -f s16le -ar 24000 -ac 1 -i /home/zijian/complete_audio.pcm   -acodec libmp3lame -b:a 128k /home/zijian/complete_audio.mp3
 ```
 
-## 使用cmake进行编译项目
+## 使用cmake进行编译项目 - Ubuntu Linux系统
 
 1. `cd build`进入build文件夹。
 
